@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/assets/banner.png" alt="fmgo mascot holding a terminal" width="480">
+  <img src=".github/assets/banner.png" alt="fmgo mascot holding a terminal" width="320">
 </p>
 
 # fmgo
