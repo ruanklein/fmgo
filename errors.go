@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/ruanklein/fmgo/v1/internal/platform"
+	"github.com/ruanklein/fmgo/internal/platform"
 )
 
 var (

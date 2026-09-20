@@ -5,7 +5,7 @@ package fmgo
 import (
 	"context"
 
-	internalprocess "github.com/ruanklein/fmgo/v1/internal/process"
+	internalprocess "github.com/ruanklein/fmgo/internal/process"
 )
 
 type commandResult struct {

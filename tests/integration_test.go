@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ruanklein/fmgo/v1"
+	"github.com/ruanklein/fmgo"
 )
 
 const nativeOperationTimeout = 90 * time.Second

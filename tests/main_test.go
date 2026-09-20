@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ruanklein/fmgo/v1"
+	"github.com/ruanklein/fmgo"
 )
 
 const nativeSetupTimeout = 30 * time.Second

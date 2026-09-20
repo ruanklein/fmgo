@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ruanklein/fmgo/v1"
+	"github.com/ruanklein/fmgo"
 )
 
 type person struct {

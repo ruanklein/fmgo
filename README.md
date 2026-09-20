@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pkg.go.dev/github.com/ruanklein/fmgo/v1"><img src="https://pkg.go.dev/badge/github.com/ruanklein/fmgo/v1.svg" alt="Go Reference"></a>
+  <a href="https://pkg.go.dev/github.com/ruanklein/fmgo"><img src="https://pkg.go.dev/badge/github.com/ruanklein/fmgo.svg" alt="Go Reference"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/ruanklein/fmgo" alt="Apache-2.0 license"></a>
   <a href="https://go.dev/"><img src="https://img.shields.io/github/go-mod/go-version/ruanklein/fmgo?label=Go" alt="Go version"></a>
 </p>
@@ -47,7 +47,7 @@ the native executable cannot be located.
 ## Installation
 
 ```bash
-go get github.com/ruanklein/fmgo/v1
+go get github.com/ruanklein/fmgo
 ```
 
 ## Quick Start
@@ -60,7 +60,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ruanklein/fmgo/v1"
+	"github.com/ruanklein/fmgo"
 )
 
 func main() {

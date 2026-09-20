@@ -7,7 +7,7 @@ import (
 	"errors"
 	"os/exec"
 
-	"github.com/ruanklein/fmgo/v1/internal/platform"
+	"github.com/ruanklein/fmgo/internal/platform"
 )
 
 // Client invokes the native fm executable.
