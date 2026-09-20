@@ -116,6 +116,9 @@ func SchemaFrom(value any) (Schema, error) {
 	if err != nil {
 		return nil, err
 	}
+	if typeOf.Kind() == reflect.Struct && typeOf.Name() != "" {
+		schema["title"] = typeOf.Name()
+	}
 	encoded, err := json.Marshal(schema)
 	if err != nil {
 		return nil, fmt.Errorf("fmgo: encode schema: %w", err)
@@ -162,6 +165,7 @@ func schemaForStruct(typeOf reflect.Type, visiting map[reflect.Type]bool) (map[s
 
 	properties := map[string]any{}
 	required := []string{}
+	order := []string{}
 	for index := range typeOf.NumField() {
 		field := typeOf.Field(index)
 		if !field.IsExported() || field.Anonymous {
@@ -176,11 +180,17 @@ func schemaForStruct(typeOf reflect.Type, visiting map[reflect.Type]bool) (map[s
 			return nil, err
 		}
 		properties[name] = property
+		order = append(order, name)
 		if !optional {
 			required = append(required, name)
 		}
 	}
-	schema := map[string]any{"type": "object", "properties": properties}
+	schema := map[string]any{
+		"type":                 "object",
+		"x-order":              order,
+		"properties":           properties,
+		"additionalProperties": false,
+	}
 	if len(required) != 0 {
 		schema["required"] = required
 	}
