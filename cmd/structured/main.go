@@ -16,7 +16,11 @@ type person struct {
 }
 
 func main() {
-	value, err := fmgo.RespondAs[person](context.Background(), fmgo.New(), fmgo.Request{
+	client, err := fmgo.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	value, err := fmgo.RespondAs[person](context.Background(), client, fmgo.Request{
 		Prompt: "Generate a fictional person.",
 	})
 	if err != nil {

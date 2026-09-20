@@ -7,9 +7,15 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+
+	"github.com/ruanklein/fmgo/v1/internal/platform"
 )
 
 var (
+	// ErrUnsupportedPlatform reports a system other than macOS.
+	ErrUnsupportedPlatform = platform.ErrUnsupportedPlatform
+	// ErrUnsupportedVersion reports a macOS version earlier than 27.
+	ErrUnsupportedVersion = platform.ErrUnsupportedVersion
 	// ErrFMNotFound reports that the native fm executable could not be located.
 	ErrFMNotFound = errors.New("fm executable not found")
 	// ErrModelUnavailable reports that Foundation Models are not ready on this machine.

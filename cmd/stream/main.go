@@ -11,7 +11,11 @@ import (
 )
 
 func main() {
-	stream, err := fmgo.New().Stream(context.Background(), fmgo.Request{Prompt: "Write a short story."})
+	client, err := fmgo.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stream, err := client.Stream(context.Background(), fmgo.Request{Prompt: "Write a short story."})
 	if err != nil {
 		log.Fatal(err)
 	}

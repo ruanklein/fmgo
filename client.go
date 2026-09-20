@@ -11,10 +11,6 @@ import (
 	"github.com/ruanklein/fmgo/v1/internal/platform"
 )
 
-func init() {
-	platform.Require()
-}
-
 // Client invokes the native fm executable.
 type Client struct {
 	executable string
@@ -31,12 +27,15 @@ func WithExecutable(path string) Option {
 }
 
 // New creates a Client that uses fm from PATH by default.
-func New(options ...Option) *Client {
+func New(options ...Option) (*Client, error) {
+	if err := platform.Check(); err != nil {
+		return nil, err
+	}
 	client := &Client{executable: "fm"}
 	for _, option := range options {
 		option(client)
 	}
-	return client
+	return client, nil
 }
 
 func (c *Client) executablePath() (string, error) {

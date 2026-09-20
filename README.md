@@ -11,13 +11,15 @@ reimplement Foundation Models. It intentionally provides no CLI.
 - Foundation Models available on the machine
 - accepted Foundation Models CLI terms where required
 
-The package panics at initialization outside macOS 27+. A missing `fm` executable
-is returned as `ErrFMNotFound` when an operation needs it.
+`fmgo.New` returns `ErrUnsupportedPlatform` outside macOS and
+`ErrUnsupportedVersion` before macOS 27. A missing `fm` executable is returned as
+`ErrFMNotFound` when an operation needs it.
 
 ## Examples
 
 ```go
-client := fmgo.New()
+client, err := fmgo.New()
+if err != nil { /* handle */ }
 response, err := client.Respond(ctx, fmgo.Request{
     Prompt: "Explain goroutines.",
     Instructions: "Be concise.",

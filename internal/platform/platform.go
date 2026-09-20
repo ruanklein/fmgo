@@ -3,6 +3,7 @@
 package platform
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"runtime"
@@ -12,21 +13,39 @@ import (
 
 const MinimumMajorVersion = 27
 
-// Require verifies that the current machine can run fmgo.
-func Require() {
+var (
+	// ErrUnsupportedPlatform reports a system other than macOS.
+	ErrUnsupportedPlatform = errors.New("fmgo requires macOS")
+	// ErrUnsupportedVersion reports a macOS version earlier than 27.
+	ErrUnsupportedVersion = errors.New("fmgo requires macOS 27 or later")
+)
+
+// Check verifies that the current machine can run fmgo.
+func Check() error {
 	if runtime.GOOS != "darwin" {
-		panic("fmgo: unsupported platform: fmgo requires macOS 27 or later")
+		return ErrUnsupportedPlatform
 	}
 
 	output, err := exec.Command("sw_vers", "-productVersion").Output()
 	if err != nil {
-		panic("fmgo: unsupported platform: unable to determine macOS version; fmgo requires macOS 27 or later")
+		return fmt.Errorf("%w: unable to determine macOS product version", ErrUnsupportedVersion)
 	}
+	return Validate(runtime.GOOS, string(output))
+}
 
-	major, err := MajorVersion(string(output))
-	if err != nil || major < MinimumMajorVersion {
-		panic("fmgo: unsupported platform: fmgo requires macOS 27 or later")
+// Validate verifies an operating system and macOS product version.
+func Validate(goos, version string) error {
+	if goos != "darwin" {
+		return ErrUnsupportedPlatform
 	}
+	major, err := MajorVersion(version)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrUnsupportedVersion, err)
+	}
+	if major < MinimumMajorVersion {
+		return fmt.Errorf("%w: found macOS %d", ErrUnsupportedVersion, major)
+	}
+	return nil
 }
 
 // MajorVersion extracts the major component of a macOS product version.

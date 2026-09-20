@@ -135,7 +135,11 @@ func TestSchemaRejectsRecursiveAndUnsupportedTypes(t *testing.T) {
 func fakeClient(t *testing.T) *fmgo.Client {
 	t.Helper()
 	t.Setenv("FMGO_HELPER", "1")
-	return fmgo.New(fmgo.WithExecutable(os.Args[0]))
+	client, err := fmgo.New(fmgo.WithExecutable(os.Args[0]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return client
 }
 
 func contains(values []string, wanted string) bool {

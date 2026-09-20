@@ -10,7 +10,11 @@ import (
 )
 
 func main() {
-	server, err := fmgo.New().Serve(context.Background(), fmgo.ServerOptions{Port: 8080})
+	client, err := fmgo.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	server, err := client.Serve(context.Background(), fmgo.ServerOptions{Port: 8080})
 	if err != nil {
 		log.Fatal(err)
 	}

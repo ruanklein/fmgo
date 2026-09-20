@@ -11,7 +11,11 @@ import (
 )
 
 func main() {
-	response, err := fmgo.New().Respond(context.Background(), fmgo.Request{
+	client, err := fmgo.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	response, err := client.Respond(context.Background(), fmgo.Request{
 		Prompt:       "Explain goroutines.",
 		Instructions: "Be concise.",
 	})
