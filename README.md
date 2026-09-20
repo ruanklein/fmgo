@@ -285,6 +285,9 @@ if err != nil {
 }
 
 response, err := client.Respond(ctx, fmgo.Request{Prompt: "Hello"})
+if errors.Is(err, fmgo.ErrGuardrailViolation) {
+	log.Println("the native model rejected the request under its guardrails")
+}
 var commandErr *fmgo.CommandError
 if errors.As(err, &commandErr) {
 	fmt.Println(commandErr.ExitCode, commandErr.Stderr)
@@ -292,8 +295,10 @@ if errors.As(err, &commandErr) {
 _ = response
 ```
 
-Known CLI conditions also map to `ErrFMNotFound`, `ErrModelUnavailable`, and
-`ErrLicenseRequired`.
+Known CLI conditions also map to `ErrFMNotFound`, `ErrModelUnavailable`,
+`ErrLicenseRequired`, and `ErrGuardrailViolation`. Guardrail classification is
+conservative and uses diagnostic markers emitted by the native CLI; inspect
+`CommandError.Stderr` when you need the original diagnostic text.
 
 ## How It Works
 

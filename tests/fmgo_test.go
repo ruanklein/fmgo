@@ -36,6 +36,14 @@ func TestHelperProcess(t *testing.T) {
 			fmt.Fprint(os.Stderr, "license not accepted")
 			os.Exit(69)
 		}
+		if contains(args, "guardrail-required") {
+			fmt.Fprint(os.Stderr, "The model's safety guardrails were triggered.")
+			os.Exit(1)
+		}
+		if contains(args, "generic-failure") {
+			fmt.Fprint(os.Stderr, "request failed")
+			os.Exit(1)
+		}
 		if contains(args, "fail") {
 			fmt.Fprint(os.Stderr, "model is not available")
 			os.Exit(7)
@@ -161,6 +169,36 @@ func TestTypedErrorsAndParsing(t *testing.T) {
 	}
 	if _, err := client.CountTokens(context.Background(), fmgo.TokenRequest{Prompt: "invalid"}); !errors.Is(err, fmgo.ErrUnexpectedOutput) {
 		t.Fatalf("expected unexpected output error, got %v", err)
+	}
+}
+
+func TestGuardrailErrorClassification(t *testing.T) {
+	const prompt = "guardrail-required"
+
+	_, err := fakeClient(t).Respond(context.Background(), fmgo.Request{Prompt: prompt})
+	if !errors.Is(err, fmgo.ErrGuardrailViolation) {
+		t.Fatalf("expected guardrail error, got %v", err)
+	}
+	var commandErr *fmgo.CommandError
+	if !errors.As(err, &commandErr) {
+		t.Fatalf("expected command error, got %T", err)
+	}
+	if commandErr.ExitCode != 1 {
+		t.Fatalf("exit code = %d, want 1", commandErr.ExitCode)
+	}
+	if !strings.Contains(commandErr.Stderr, "guardrails") {
+		t.Fatalf("stderr = %q, want guardrail diagnostic", commandErr.Stderr)
+	}
+	if strings.Contains(commandErr.Command, prompt) || strings.Contains(err.Error(), prompt) {
+		t.Fatalf("error exposed user prompt: %q", err)
+	}
+
+	_, err = fakeClient(t).Respond(context.Background(), fmgo.Request{Prompt: "generic-failure"})
+	if errors.Is(err, fmgo.ErrGuardrailViolation) {
+		t.Fatal("generic status 1 was classified as a guardrail violation")
+	}
+	if !errors.As(err, &commandErr) || commandErr.ExitCode != 1 {
+		t.Fatalf("generic failure = %v, want CommandError with status 1", err)
 	}
 }
 

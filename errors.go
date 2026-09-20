@@ -22,6 +22,8 @@ var (
 	ErrModelUnavailable = errors.New("foundation model unavailable")
 	// ErrLicenseRequired reports that the Foundation Models CLI terms have not been accepted.
 	ErrLicenseRequired = errors.New("foundation models license not accepted")
+	// ErrGuardrailViolation reports that the native model rejected content under its guardrails.
+	ErrGuardrailViolation = errors.New("foundation model guardrail violation")
 	// ErrUnexpectedOutput reports output that fmgo cannot safely interpret.
 	ErrUnexpectedOutput = errors.New("unexpected fm output")
 )
@@ -35,10 +37,14 @@ type CommandError struct {
 }
 
 func (e *CommandError) Error() string {
+	status := "failed"
 	if e.ExitCode >= 0 {
-		return fmt.Sprintf("fmgo: %s exited with status %d", e.Command, e.ExitCode)
+		status = fmt.Sprintf("exited with status %d", e.ExitCode)
 	}
-	return fmt.Sprintf("fmgo: %s failed", e.Command)
+	if e.cause != nil {
+		return fmt.Sprintf("fmgo: %s %s: %v", e.Command, status, e.cause)
+	}
+	return fmt.Sprintf("fmgo: %s %s", e.Command, status)
 }
 
 // Unwrap returns a recognized operational cause when one is available.
@@ -60,14 +66,26 @@ func commandError(args []string, stderr string, err error) error {
 	switch {
 	case exitCode == 69:
 		cause = ErrLicenseRequired
+	case strings.Contains(lowerStderr, "guardrail"),
+		strings.Contains(lowerStderr, "content filter"),
+		strings.Contains(lowerStderr, "unsafe content"):
+		cause = ErrGuardrailViolation
 	case strings.Contains(lowerStderr, "model is not available") || strings.Contains(lowerStderr, "modelnotready"):
 		cause = ErrModelUnavailable
 	}
 
 	return &CommandError{
-		Command:  strings.Join(append([]string{"fm"}, args...), " "),
+		Command:  commandName(args),
 		ExitCode: exitCode,
 		Stderr:   stderr,
 		cause:    cause,
 	}
+}
+
+// commandName identifies the native operation without exposing user-provided arguments.
+func commandName(args []string) string {
+	if len(args) == 0 {
+		return "fm"
+	}
+	return "fm " + args[0]
 }
