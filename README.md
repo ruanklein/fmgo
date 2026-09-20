@@ -1,93 +1,322 @@
 <p align="center">
-  <img src=".github/assets/banner.png" alt="fmgo mascot holding a terminal" width="320">
+  <img src=".github/assets/logo.png" alt="fmgo" width="360">
 </p>
 
-# fmgo
+<h1 align="center">fmgo</h1>
 
-`fmgo` is a pure Go interface for Apple's Foundation Models CLI (`fm`). It runs
-the native executable directly and does not reimplement Foundation Models.
+<p align="center">
+  A Go interface for Apple's Foundation Models CLI (<code>fm</code>).
+</p>
 
-It is not an Apple project or official Apple SDK. It is not a Swift bridge, does
-not use or require cgo, does not access private Apple frameworks, and
-intentionally provides no CLI of its own.
+<p align="center">
+  <a href="https://pkg.go.dev/github.com/ruanklein/fmgo/v1"><img src="https://pkg.go.dev/badge/github.com/ruanklein/fmgo/v1.svg" alt="Go Reference"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/ruanklein/fmgo" alt="Apache-2.0 license"></a>
+  <a href="https://go.dev/"><img src="https://img.shields.io/github/go-mod/go-version/ruanklein/fmgo?label=Go" alt="Go version"></a>
+</p>
+
+`fmgo` provides an idiomatic Go interface to Apple's native Foundation Models
+CLI (`fm`). It executes and manages the native command internally so Go
+applications can use Apple's on-device Foundation Model without Swift, cgo, or
+private framework bindings.
+
+It is a focused Go library: not a CLI, Apple SDK, Swift bridge, cgo bridge, or
+reimplementation of Foundation Models.
+
+## Features
+
+- Non-streaming and streaming response generation with context cancellation
+- Instructions, text segments, image input, transcripts, and conversation resume
+- Structured output with local `SchemaFor[T]` generation and `RespondAs[T]`
+- Token counting and structured Foundation Model availability results
+- Interactive native `fm chat` process/session management
+- Native `fm serve` lifecycle management over TCP or Unix sockets
+- Typed sentinel errors and diagnostic `CommandError` values
 
 ## Requirements
 
 - macOS 27 or later
-- Apple's native `fm` command
+- Go 1.27 or later
+- Apple's native `fm` executable
 - Foundation Models available on the machine
-- accepted Foundation Models CLI terms where required
+- Accepted Foundation Models CLI terms where required
 
 `fmgo.New` returns `ErrUnsupportedPlatform` outside macOS and
-`ErrUnsupportedVersion` before macOS 27. A missing `fm` executable is returned as
-`ErrFMNotFound` when an operation needs it.
+`ErrUnsupportedVersion` before macOS 27. Operations return `ErrFMNotFound` when
+the native executable cannot be located.
 
-## Examples
+## Installation
 
-```go
-client, err := fmgo.New()
-if err != nil { /* handle */ }
-response, err := client.Respond(ctx, fmgo.Request{
-    Prompt: "Explain goroutines.",
-    Instructions: "Be concise.",
-})
+```bash
+go get github.com/ruanklein/fmgo/v1
 ```
 
+## Quick Start
+
 ```go
-stream, err := client.Stream(ctx, fmgo.Request{Prompt: "Write a short story."})
-if err != nil { /* handle */ }
-defer stream.Close()
-for stream.Next() {
-    fmt.Print(stream.Text())
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/ruanklein/fmgo/v1"
+)
+
+func main() {
+	client, err := fmgo.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	response, err := client.Respond(context.Background(), fmgo.Request{
+		Prompt: "Explain goroutines in one paragraph.",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(response.Text)
 }
-if err := stream.Err(); err != nil { /* handle */ }
 ```
+
+## Usage
+
+The examples below assume a previously created `client` and `ctx`.
+
+### Instructions
 
 ```go
 response, err := client.Respond(ctx, fmgo.Request{
-    Prompt: "Describe this image.",
-    Images: []string{"/tmp/photo.png"},
+	Prompt:       "Explain channels.",
+	Instructions: "Use one concise paragraph.",
 })
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(response.Text)
 ```
+
+### Streaming
+
+`Stream` owns a native process. Always close it and check its terminal error.
+
+```go
+stream, err := client.Stream(ctx, fmgo.Request{
+	Prompt: "Write a short story.",
+})
+if err != nil {
+	log.Fatal(err)
+}
+defer stream.Close()
+
+for stream.Next() {
+	fmt.Print(stream.Text())
+}
+if err := stream.Err(); err != nil {
+	log.Fatal(err)
+}
+```
+
+### Images
+
+Image paths are passed directly to the native `fm` command. `fmgo` does not
+process the image itself.
+
+```go
+response, err := client.Respond(ctx, fmgo.Request{
+	Prompt: "Describe this image.",
+	Images: []string{"/path/to/image.png"},
+})
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(response.Text)
+```
+
+### Structured Output
+
+`SchemaFor` generates JSON Schema locally from a Go type. `RespondAs` uses that
+schema for the request and decodes the JSON response into the same type.
 
 ```go
 type Person struct {
-    Name string `json:"name"`
-    Age int `json:"age"`
+	Name string `json:"name"`
+	Age  int    `json:"age"`
 }
 
-person, err := fmgo.RespondAs[Person](ctx, client, fmgo.Request{
-    Prompt: "Generate a fictional person.",
+schema, err := fmgo.SchemaFor[Person]()
+if err != nil {
+	log.Fatal(err)
+}
+
+response, err := client.Respond(ctx, fmgo.Request{
+	Prompt: "Generate a fictional person.",
+	Schema: schema,
 })
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(response.Text)
 ```
 
 ```go
-count, err := client.CountTokens(ctx, fmgo.TokenRequest{Prompt: "Hello world"})
-availability, err := client.Available(ctx)
-_ = count
-_ = availability
-_ = err
+person, err := fmgo.RespondAs[Person](ctx, client, fmgo.Request{
+	Prompt: "Generate a fictional person.",
+})
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(person.Name)
 ```
+
+### Token Counting
+
+`CountTokens` returns an integer rather than CLI text. A saved transcript can be
+counted with `TokenRequest.Transcript`.
+
+```go
+count, err := client.CountTokens(ctx, fmgo.TokenRequest{
+	Prompt: "Hello world",
+})
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(count)
+```
+
+### Availability
+
+```go
+availability, err := client.Available(ctx)
+if err != nil {
+	log.Fatal(err)
+}
+for _, model := range availability.Models {
+	fmt.Println(model.Model, model.Available, model.Reason)
+}
+```
+
+### Transcripts and Resume
+
+Transcripts are saved and resumed by the native `fm` functionality.
 
 ```go
 response, err := client.Respond(ctx, fmgo.Request{
-    Prompt: "Continue the conversation.",
-    Resume: "/tmp/conversation.json",
-    SaveTranscript: "/tmp/updated-conversation.json",
+	Prompt:         "Continue the conversation.",
+	Resume:         "/tmp/conversation.json",
+	SaveTranscript: "/tmp/updated-conversation.json",
 })
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(response.Text)
 ```
+
+### Interactive Chat
+
+`fm chat` is an interactive native process, not an undocumented structured chat
+protocol. `StartChat` exposes its stdin, stdout, and stderr; consume both output
+streams, close stdin when finished, then call `Wait` or `Close` to reap it.
 
 ```go
-server, err := client.Serve(ctx, fmgo.ServerOptions{Port: 8080})
-if err != nil { /* handle */ }
-defer server.Close()
+session, err := client.StartChat(ctx, fmgo.ChatOptions{
+	Instructions: "You are a concise assistant.",
+})
+if err != nil {
+	log.Fatal(err)
+}
+defer session.Close()
 ```
 
-`cmd/respond`, `cmd/stream`, `cmd/structured`, and `cmd/server` contain
-compilable versions of these integrations.
+### Chat Completions Server
 
-## Notes
+`Serve` manages Apple's native `fm serve` process. It does not implement an HTTP
+server or proxy in Go.
 
-`fmgo` never invokes `sudo`, accepts license terms, changes Apple's guardrails,
-logs prompts, or constructs shell commands. `ChatSession` deliberately exposes
-the native interactive process streams instead of inventing a message protocol.
+```go
+server, err := client.Serve(ctx, fmgo.ServerOptions{
+	Host: "127.0.0.1",
+	Port: 8080,
+})
+if err != nil {
+	log.Fatal(err)
+}
+defer server.Close()
+
+fmt.Println(server.Addr())
+```
+
+Use `Socket` instead of `Host` and `Port` for a Unix domain socket:
+
+```go
+socketServer, err := client.Serve(ctx, fmgo.ServerOptions{
+	Socket: "/tmp/fm.sock",
+})
+if err != nil {
+	log.Fatal(err)
+}
+defer socketServer.Close()
+```
+
+## Error Handling
+
+Use `errors.Is` for expected operational conditions and `errors.As` for command
+diagnostics.
+
+```go
+client, err := fmgo.New()
+if errors.Is(err, fmgo.ErrUnsupportedPlatform) {
+	log.Fatal("fmgo requires macOS")
+}
+if errors.Is(err, fmgo.ErrUnsupportedVersion) {
+	log.Fatal("fmgo requires macOS 27 or later")
+}
+if err != nil {
+	log.Fatal(err)
+}
+
+response, err := client.Respond(ctx, fmgo.Request{Prompt: "Hello"})
+var commandErr *fmgo.CommandError
+if errors.As(err, &commandErr) {
+	fmt.Println(commandErr.ExitCode, commandErr.Stderr)
+}
+_ = response
+```
+
+Known CLI conditions also map to `ErrFMNotFound`, `ErrModelUnavailable`, and
+`ErrLicenseRequired`.
+
+## How It Works
+
+```text
+Go application
+      │
+      ▼
+    fmgo
+      │
+      ▼
+      fm
+      │
+      ▼
+Apple Foundation Models
+```
+
+`fmgo` builds argument lists, manages native subprocesses and streaming,
+translates known errors, and presents the native CLI through Go types.
+
+## Platform Scope
+
+`fmgo` intentionally targets Apple's native `fm` command on macOS. It does not
+support Linux, Windows, cloud providers, OpenAI, Anthropic, Ollama, or arbitrary
+LLM providers.
+
+## Disclaimer
+
+`fmgo` is an independent open-source project and is not affiliated with,
+endorsed by, or sponsored by Apple Inc. Apple, macOS, and Foundation Models are
+trademarks of Apple Inc. `fmgo` does not distribute Apple's `fm` executable.
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
