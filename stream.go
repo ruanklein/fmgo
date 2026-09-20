@@ -19,20 +19,29 @@ type Stream struct {
 	text    string
 	err     error
 	once    sync.Once
+	cleanup func()
+	clean   sync.Once
 }
 
 // Stream starts a streaming response.
 func (c *Client) Stream(ctx context.Context, request Request) (*Stream, error) {
+	request, cleanup, err := request.withSchemaFile()
+	if err != nil {
+		return nil, err
+	}
 	args, err := request.args(true)
 	if err != nil {
+		cleanup()
 		return nil, err
 	}
 	path, err := c.executablePath()
 	if err != nil {
+		cleanup()
 		return nil, err
 	}
 	command, err := internalprocess.StartPiped(ctx, path, args...)
 	if err != nil {
+		cleanup()
 		return nil, commandError(args, "", err)
 	}
 	stderr := make(chan []byte, 1)
@@ -45,6 +54,7 @@ func (c *Client) Stream(ctx context.Context, request Request) (*Stream, error) {
 		stdout:  command.Stdout(),
 		stderr:  stderr,
 		buffer:  make([]byte, 32*1024),
+		cleanup: cleanup,
 	}, nil
 }
 
@@ -72,6 +82,7 @@ func (s *Stream) Next() bool {
 	if waitErr := s.command.Wait(); waitErr != nil {
 		s.err = commandError([]string{"respond", "--stream"}, string(stderr), waitErr)
 	}
+	s.cleanupSchemaFile()
 	return false
 }
 
@@ -87,6 +98,11 @@ func (s *Stream) Close() error {
 	s.once.Do(func() {
 		_ = s.stdout.Close()
 		closeErr = s.command.Close()
+		s.cleanupSchemaFile()
 	})
 	return closeErr
+}
+
+func (s *Stream) cleanupSchemaFile() {
+	s.clean.Do(s.cleanup)
 }

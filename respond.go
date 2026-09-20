@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 )
 
 // Request configures a Foundation Models response.
@@ -34,6 +35,12 @@ type Response struct {
 
 // Respond generates a complete non-streaming response.
 func (c *Client) Respond(ctx context.Context, request Request) (Response, error) {
+	request, cleanup, err := request.withSchemaFile()
+	if err != nil {
+		return Response{}, err
+	}
+	defer cleanup()
+
 	args, err := request.args(false)
 	if err != nil {
 		return Response{}, err
@@ -43,6 +50,34 @@ func (c *Client) Respond(ctx context.Context, request Request) (Response, error)
 		return Response{}, err
 	}
 	return Response{Text: string(stdout)}, nil
+}
+
+func (r Request) withSchemaFile() (Request, func(), error) {
+	if len(r.Schema) == 0 {
+		return r, func() {}, nil
+	}
+	if r.SchemaFile != "" {
+		return Request{}, nil, fmt.Errorf("fmgo: schema and schema file cannot both be set")
+	}
+
+	file, err := os.CreateTemp("", "fmgo-schema-*.json")
+	if err != nil {
+		return Request{}, nil, fmt.Errorf("fmgo: create schema file: %w", err)
+	}
+	path := file.Name()
+	if _, err := file.Write(r.Schema); err != nil {
+		_ = file.Close()
+		_ = os.Remove(path)
+		return Request{}, nil, fmt.Errorf("fmgo: write schema file: %w", err)
+	}
+	if err := file.Close(); err != nil {
+		_ = os.Remove(path)
+		return Request{}, nil, fmt.Errorf("fmgo: close schema file: %w", err)
+	}
+
+	r.Schema = nil
+	r.SchemaFile = path
+	return r, func() { _ = os.Remove(path) }, nil
 }
 
 // RespondAs generates JSON for T and decodes it into T.

@@ -39,14 +39,19 @@ refactor/process-cleanup
 Run these commands before opening a pull request:
 
 ```bash
-go fmt ./...
-go vet ./...
-go test ./...
+make check
 ```
 
 The test suite uses a fake `fm` executable and does not require a Foundation
-Model download. fmgo supports macOS 27 or later, so run the full suite on a
-supported macOS version.
+Model download.
+
+Native integration tests require macOS 27+ on Apple Silicon, the Foundation
+Models CLI license accepted, and the system model available. Run them only on
+a prepared machine:
+
+```bash
+make integration
+```
 
 ## Commits
 
