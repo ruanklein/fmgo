@@ -20,6 +20,9 @@ func TestMain(m *testing.M) {
 	if os.Getenv("FMGO_HELPER") == "1" {
 		os.Exit(m.Run())
 	}
+	if os.Getenv("FMGO_INTEGRATION") != "1" {
+		os.Exit(m.Run())
+	}
 
 	client, err := fmgo.New()
 	if err != nil {

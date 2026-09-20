@@ -43,10 +43,10 @@ generic AI abstraction.
 ## Tests and Documentation
 
 - Use `WithExecutable` and the existing fake executable pattern for process
-  tests. Do not require a downloaded Foundation Model or run live prompts.
+  tests. Native tests run only with `FMGO_INTEGRATION=1` on a prepared machine.
 - Run `go fmt ./...`, `go vet ./...`, and `go test ./...` after Go changes.
-- The full suite targets macOS 27 or later because the public constructor
-  validates platform support.
+- Use `make integration` only on macOS 27+ Apple Silicon with the fm license
+  accepted and the system model available.
 - Update README, GoDoc, examples, and tests whenever a public contract changes.
 
 ## Workflow

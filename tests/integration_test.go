@@ -289,6 +289,9 @@ func TestNativeServerValidation(t *testing.T) {
 
 func nativeContext(t *testing.T) context.Context {
 	t.Helper()
+	if nativeClient == nil {
+		t.Skip("native integration requires FMGO_INTEGRATION=1")
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), nativeOperationTimeout)
 	t.Cleanup(cancel)
 	return ctx

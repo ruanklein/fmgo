@@ -1,0 +1,19 @@
+name: Native Integration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-integration:
+    name: native-integration
+    runs-on: [self-hosted, macOS, ARM64, fmgo-native]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+      - run: make integration

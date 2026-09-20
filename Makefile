@@ -1,16 +1,20 @@
 GO ?= go
 
-.PHONY: help test vet examples check
+.PHONY: help test integration vet examples check
 
 help:
 	@printf '%s\n' \
 		'make test     Run the Go test suite.' \
+		'make integration Run native Foundation Models integration tests.' \
 		'make vet      Run go vet.' \
 		'make examples Build integration examples into examples/.' \
 		'make check    Run tests, vet, and build examples.'
 
 test:
 	$(GO) test ./...
+
+integration:
+	FMGO_INTEGRATION=1 $(GO) test -count=1 ./...
 
 vet:
 	$(GO) vet ./...
