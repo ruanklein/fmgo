@@ -22,6 +22,14 @@ private framework bindings.
 It is a focused Go library: not a CLI, Apple SDK, Swift bridge, cgo bridge, or
 reimplementation of Foundation Models.
 
+## Footprint
+
+At `v0.1.2`, fmgo contains 31,794 bytes (about 31 KiB) of production Go source:
+the public package and its `internal/` packages, excluding tests, `cmd/`
+examples, documentation, and repository assets. Go compiles and links reachable
+code into the consumer application, so its final binary contribution varies by
+target and toolchain.
+
 ## Features
 
 - Non-streaming and streaming response generation with context cancellation
