@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ruanklein/fmgo/v1"
+	"github.com/ruanklein/fmgo"
 )
 
 func Example() {

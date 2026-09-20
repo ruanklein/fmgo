@@ -8,7 +8,7 @@ import (
 	"io"
 	"sync"
 
-	internalprocess "github.com/ruanklein/fmgo/v1/internal/process"
+	internalprocess "github.com/ruanklein/fmgo/internal/process"
 )
 
 // ChatOptions configures an interactive fm chat session.

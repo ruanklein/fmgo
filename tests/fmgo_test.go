@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ruanklein/fmgo/v1"
+	"github.com/ruanklein/fmgo"
 )
 
 func TestHelperProcess(t *testing.T) {

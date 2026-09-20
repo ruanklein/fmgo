@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	internalprocess "github.com/ruanklein/fmgo/v1/internal/process"
+	internalprocess "github.com/ruanklein/fmgo/internal/process"
 )
 
 // ServerOptions configures the native fm serve process.

@@ -7,7 +7,7 @@ import (
 	"io"
 	"sync"
 
-	internalprocess "github.com/ruanklein/fmgo/v1/internal/process"
+	internalprocess "github.com/ruanklein/fmgo/internal/process"
 )
 
 // Stream incrementally reads a response from fm. Text returns the latest read block.
