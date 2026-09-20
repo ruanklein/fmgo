@@ -1,8 +1,15 @@
+<p align="center">
+  <img src=".github/assets/banner.png" alt="fmgo mascot holding a terminal" width="480">
+</p>
+
 # fmgo
 
-`fmgo` is a Go interface for Apple's Foundation Models CLI (`fm`). It is not an
-Apple project or official Apple SDK: it wraps the native executable and does not
-reimplement Foundation Models. It intentionally provides no CLI.
+`fmgo` is a pure Go interface for Apple's Foundation Models CLI (`fm`). It runs
+the native executable directly and does not reimplement Foundation Models.
+
+It is not an Apple project or official Apple SDK. It is not a Swift bridge, does
+not use or require cgo, does not access private Apple frameworks, and
+intentionally provides no CLI of its own.
 
 ## Requirements
 
