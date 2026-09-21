@@ -22,6 +22,30 @@ private framework bindings.
 It is a focused Go library: not a CLI, Apple SDK, Swift bridge, cgo bridge, or
 reimplementation of Foundation Models.
 
+## How It Works
+
+```mermaid
+flowchart LR
+    app[Go application]
+    fmgo["fmgo Client API<br/>platform checks<br/>process and stream management<br/>typed errors"]
+    ops["Native fm operations<br/><br/>respond · stream · chat<br/>count-tokens · schema<br/>available · license · serve"]
+    executable["Apple's native fm executable"]
+    models["Apple Foundation Models<br/>on-device model runtime"]
+    result["Responses, streams,<br/>and typed diagnostics"]
+
+    app --> fmgo
+    fmgo --> ops
+    ops --> executable
+    executable --> models
+    models -.-> result
+    result -.-> app
+```
+
+`fmgo` builds argument lists, validates the supported platform, manages the
+native `fm` process and streaming, translates known diagnostics into Go errors,
+and returns responses to the calling application. The Foundation Models runtime
+remains Apple's native on-device implementation; `fmgo` does not replace it.
+
 ## Footprint
 
 At `v0.1.2`, fmgo contains 31,794 bytes (about 31 KiB) of production Go source:
@@ -57,6 +81,12 @@ the native executable cannot be located.
 ```bash
 go get github.com/ruanklein/fmgo
 ```
+
+## Example Project
+
+[`fm-chat`](https://github.com/ruanklein/fm-chat) is a demonstration project
+that uses `fmgo` to build an interactive chat application with Apple's native
+Foundation Models CLI.
 
 ## Quick Start
 
@@ -299,24 +329,6 @@ Known CLI conditions also map to `ErrFMNotFound`, `ErrModelUnavailable`,
 `ErrLicenseRequired`, and `ErrGuardrailViolation`. Guardrail classification is
 conservative and uses diagnostic markers emitted by the native CLI; inspect
 `CommandError.Stderr` when you need the original diagnostic text.
-
-## How It Works
-
-```text
-Go application
-      │
-      ▼
-    fmgo
-      │
-      ▼
-      fm
-      │
-      ▼
-Apple Foundation Models
-```
-
-`fmgo` builds argument lists, manages native subprocesses and streaming,
-translates known errors, and presents the native CLI through Go types.
 
 ## Platform Scope
 
