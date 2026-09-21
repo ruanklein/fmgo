@@ -22,37 +22,16 @@ private framework bindings.
 It is a focused Go library: not a CLI, Apple SDK, Swift bridge, cgo bridge, or
 reimplementation of Foundation Models.
 
+~30 KB of production Go source.
+
 ## How It Works
 
-```mermaid
-flowchart LR
-    app[Go application]
-    fmgo["fmgo Client API<br/>platform checks<br/>process and stream management<br/>typed errors"]
-    ops["Native fm operations<br/><br/>respond · stream · chat<br/>count-tokens · schema<br/>available · license · serve"]
-    executable["Apple's native fm executable"]
-    models["Apple Foundation Models<br/>on-device model runtime"]
-    result["Responses, streams,<br/>and typed diagnostics"]
-
-    app --> fmgo
-    fmgo --> ops
-    ops --> executable
-    executable --> models
-    models -.-> result
-    result -.-> app
-```
+![fmgo flow](.github/assets/flow.png)
 
 `fmgo` builds argument lists, validates the supported platform, manages the
 native `fm` process and streaming, translates known diagnostics into Go errors,
 and returns responses to the calling application. The Foundation Models runtime
 remains Apple's native on-device implementation; `fmgo` does not replace it.
-
-## Footprint
-
-At `v0.1.2`, fmgo contains 31,794 bytes (about 31 KiB) of production Go source:
-the public package and its `internal/` packages, excluding tests, `cmd/`
-examples, documentation, and repository assets. Go compiles and links reachable
-code into the consumer application, so its final binary contribution varies by
-target and toolchain.
 
 ## Features
 
